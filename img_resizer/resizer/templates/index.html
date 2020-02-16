@@ -1,0 +1,53 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="row justify-content-md-center">
+    <h1>Image resizer start page</h1>
+</div>
+<div class="row justify-content-md-center">
+    <a href="{% url 'img_upload' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">upload new image</a>
+</div>
+<div class="row justify-content-md-center top-buffer mt-4">
+    <h2>List images</h2>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="list-group">
+        {% for img in page_obj %}
+            <a href="{{ img.get_absolute_url }}" class="list-group-item list-group-item-action">{{ img.name }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<nav aria-label="...">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    </li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a></li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">Previous</span>
+    </li>
+    {% endif %}
+    <li class="page-item active">
+      <span class="page-link">
+        {{ page_obj.number }}
+        <span class="sr-only">(current)</span>
+      </span>
+    </li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a></li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">Next</span>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+
+{% endblock %}
