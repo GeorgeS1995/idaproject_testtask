@@ -74,7 +74,11 @@ class ImageDetail(View):
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in self.http_method_names:
             return self.http_method_not_allowed
-        img = Image.objects.get(img_hash=kwargs['img_hash'])
+        try:
+            img = Image.objects.get(img_hash=kwargs['img_hash'])
+        except Image.DoesNotExist:
+            lh.error(f"Cant' find image with hash {kwargs['img_hash']}")
+            return render(request, template_name='error_does_not_exist.html')
         width = request.GET.get('width')
         height = request.GET.get('height')
         size = request.GET.get('size')

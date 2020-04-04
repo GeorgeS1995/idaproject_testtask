@@ -124,7 +124,7 @@ class ImageDetailTestCase(TestCase):
         self.list_resize = [{"width": 100, "height": 100},
                             {"width": 10, "height": 100},
                             {"width": 100, "height": 10},
-                            {"width": 10000, "height": 10000},
+                            {"width": 7680, "height": 4320},
                             {"size": 500000},
                             {"width": 100, "height": 100, "size": 500000},
                             {"width": 100, "height": 100, "size": 200000}, ]
@@ -132,6 +132,16 @@ class ImageDetailTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(test_img_storage_view)
+
+    @override_settings(MEDIA_ROOT=test_img_storage_view)
+    def test_image_resize_err(self):
+        resp = self.client.get(reverse('image', args=(self.hasher,)), {'size': 10})
+        self.assertNotEqual(resp._container[0].decode().find("To big image compression."), -1)
+
+    @override_settings(MEDIA_ROOT=test_img_storage_view)
+    def test_image_resize_file_does_not_exist(self):
+        resp = self.client.get(reverse('image', args=("111111",)), {'size': 10})
+        self.assertNotEqual(resp._container[0].decode().find("Cant' find image."), -1)
 
     @override_settings(MEDIA_ROOT=test_img_storage_view)
     def test_image_view(self):
