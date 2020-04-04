@@ -90,6 +90,18 @@ class ImageUploadTestCase(TestCase):
         resp = self.client.post(reverse('img_upload'), {'url': self.not_img_url})
         self.assertFormError(resp, 'form', None, "Can't download file")
 
+    @override_settings(MEDIA_ROOT=test_img_storage_form,
+                       MAX_UPLOAD_SIZE=20)
+    def test_rawfile_max_filesize(self):
+        resp = self.client.post(reverse('img_upload'), {'photo': self.testimg})
+        self.assertFormError(resp, 'form', 'photo', "File size greater than 1.9073486328125e-05 mb")
+
+    @override_settings(MEDIA_ROOT=test_img_storage_form,
+                       MAX_UPLOAD_SIZE=20)
+    def test_url_max_filesize(self):
+        resp = self.client.post(reverse('img_upload'), {'url': self.url})
+        self.assertFormError(resp, 'form', 'url', "File size greater than 1.9073486328125e-05 mb")
+
 
 class ImageDetailTestCase(TestCase):
 

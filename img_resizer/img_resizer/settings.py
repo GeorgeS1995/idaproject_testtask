@@ -166,3 +166,5 @@ CACHES = {
 STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'img')
 MEDIA_URL = '/img/'
+# better setting this check on web server side
+MAX_UPLOAD_SIZE = 20*1024*1024

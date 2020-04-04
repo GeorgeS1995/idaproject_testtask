@@ -7,8 +7,31 @@ from django.core.files.images import ImageFile
 import requests
 import logging
 import magic
+from django.conf import settings
 
 lh = logging.getLogger('django')
+
+
+def check_filesize(url):
+    try:
+        r = requests.head(url)
+        r.raise_for_status()
+    except requests.exceptions.ReadTimeout:
+        lh.error("request read timeout")
+        return
+    except requests.exceptions.ConnectTimeout:
+        lh.error("request connection timeout")
+        return
+    except requests.exceptions.ConnectionError as err:
+        lh.error("connection error: {}".format(err))
+        return
+    except requests.exceptions.HTTPError as err:
+        lh.error("HTTP error. {}".format(err))
+        return
+    except requests.exceptions as err:
+        lh.error("Unhandled error: {}".format(err))
+        return
+    return int(r.headers["content-length"]) <= settings.MAX_UPLOAD_SIZE
 
 
 def img_download(url):
@@ -46,7 +69,7 @@ def img_download(url):
 class ImageForm(forms.ModelForm):
     url = forms.CharField(label='url upload', required=False, widget=forms.URLInput(attrs={'class': 'form-control'}))
     photo = forms.ImageField(label='rawfile upload', required=False, widget=forms.FileInput(
-                                                                                attrs={'class': 'form-control-file'}))
+        attrs={'class': 'form-control-file'}))
 
     class Meta:
         model = Image
@@ -66,10 +89,25 @@ class ImageForm(forms.ModelForm):
             m.save()
         return m
 
+    def clean_url(self):
+        url = self.cleaned_data['url']
+        if url == "" or check_filesize(url):
+            return url
+        lh.error(f"File size greater than {settings.MAX_UPLOAD_SIZE / (1024 * 1024)} mb")
+        raise forms.ValidationError(f"File size greater than {settings.MAX_UPLOAD_SIZE / (1024 * 1024)} mb")
+
+    def clean_photo(self):
+        rawfile = self.cleaned_data['photo']
+        if rawfile is not None and rawfile.size > settings.MAX_UPLOAD_SIZE:
+            lh.error(f"File size greater than {settings.MAX_UPLOAD_SIZE / (1024 * 1024)} mb")
+            raise forms.ValidationError(f"File size greater than {settings.MAX_UPLOAD_SIZE / (1024 * 1024)} mb")
+        return rawfile
+
     def clean(self):
-        cleaned_data = super().clean()
-        url = cleaned_data.get("url")
-        rawfile = cleaned_data.get("photo")
+        if self._errors:
+            return
+        url = self.cleaned_data.get("url")
+        rawfile = self.cleaned_data.get("photo")
         if (url != "" and rawfile is not None) or (url == "" and rawfile is None):
             msg = "fill in one form field at a time"
             raise forms.ValidationError(msg)
